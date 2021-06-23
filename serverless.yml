@@ -1,5 +1,5 @@
-org: avagner
-app: passbook-sign
+org:                    clawfire # change this with your own org
+app:                    passbook-sign
 service:                passbook-sign
 
 frameworkVersion:       '2'
@@ -24,5 +24,7 @@ functions:
             path:       sign
             method:     post
     environment:
+        # put your key in this secret below. It should be a one liner with \n for new lines.
         KEY :           ${param:key}
+        # and your key passphrase here
         KEY_PASSPHRASE : ${param:passphrase}
