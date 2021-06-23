@@ -1,5 +1,7 @@
 'use strict';
-const { execSync } = require('child_process');
+const {
+    execSync
+} = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -112,6 +114,7 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
 
 
     // /tmp acts as a cache when the lambda is "hot"
+    // It's automatically flushed when the lambda is cold (±30min w/o access)
     if (!fs.existsSync('/tmp/certificate.pem')) {
         console.log('files do not exist, creating them...')
         fs.writeFileSync('/tmp/certificate.pem', certificate);
@@ -119,26 +122,26 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
         fs.writeFileSync('/tmp/key.pem', key.replace(/\\n/g, "\n"));
     }
 
-    const hash = crypto.createHash('sha1').update(manifest).digest('hex')
-    const manifestFile = `/tmp/manifest.${hash}.json`
-    if (!fs.existsSync(manifestFile)) {    
+    const hash = crypto.createHash('sha1').update(manifest).digest('hex');
+    const manifestFile = `/tmp/manifest.${hash}.json`;
+    if (!fs.existsSync(manifestFile)) {
         fs.writeFileSync(manifestFile, manifest)
     }
 
     const command = `openssl smime -binary -sign -md SHA1 -certfile /tmp/wwdr.pem -signer /tmp/certificate.pem -inkey /tmp/key.pem -in ${manifestFile} -outform DER -passin pass:${passphrase}`
     console.log(command)
     try {
-        const stdout = execSync(command)
-        console.log('rulez')
+        const stdout = execSync(command);
+        console.log('rulez');
         const base64data = stdout.toString('base64');
-        console.log('result', base64data)
+        console.log('result', base64data);
 
         return {
             statusCode: 200,
             body: base64data,
         };
 
-    } catch(error) {
+    } catch (error) {
         console.log(`Status Code: ${error.status} with '${error.message}'`);
         return {
             statusCode: 500,
