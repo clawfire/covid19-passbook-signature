@@ -1,10 +1,12 @@
 'use strict';
 const { execSync } = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs');
 
 
 module.exports.sign = async (event) => {
     const manifest = event.body;
+
     const wwdr = `-----BEGIN CERTIFICATE-----
 MIIEUTCCAzmgAwIBAgIQfK9pCiW3Of57m0R6wXjF7jANBgkqhkiG9w0BAQsFADBi
 MQswCQYDVQQGEwJVUzETMBEGA1UEChMKQXBwbGUgSW5jLjEmMCQGA1UECxMdQXBw
@@ -81,10 +83,14 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
         fs.writeFileSync('/tmp/wwdr.pem', wwdr);
         fs.writeFileSync('/tmp/key.pem', key.replace(/\\n/g, "\n"));
     }
-    // TODO: clear tmp manifest
-    fs.writeFileSync('/tmp/manifest.json', manifest)
 
-    const command = `echo '${manifest}' | openssl smime -binary -sign -md SHA1 -certfile /tmp/wwdr.pem -signer /tmp/certificate.pem -inkey /tmp/key.pem -in /tmp/manifest.json -outform DER -passin pass:${passphrase}`
+    const hash = crypto.createHash('sha1').update(manifest).digest('hex')
+    const manifestFile = `/tmp/manifest.${hash}.json`
+    if (!fs.existsSync(manifestFile)) {    
+        fs.writeFileSync(manifestFile, manifest)
+    }
+
+    const command = `openssl smime -binary -sign -md SHA1 -certfile /tmp/wwdr.pem -signer /tmp/certificate.pem -inkey /tmp/key.pem -in ${manifestFile} -outform DER -passin pass:${passphrase}`
     console.log(command)
     try {
         const stdout = execSync(command)
