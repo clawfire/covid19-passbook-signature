@@ -1,5 +1,5 @@
-org:                    clawfire
-app:                    passbook-sign
+org: avagner
+app: passbook-sign
 service:                passbook-sign
 
 frameworkVersion:       '2'

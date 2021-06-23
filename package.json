@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "child_process": "^1.0.2",
-    "openssl-nodejs": "^1.0.5"
+    "child_process": "^1.0.2"
   }
 }

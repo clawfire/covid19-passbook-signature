@@ -1,12 +1,10 @@
 'use strict';
-
-const execSync = require('child_process');
-const openssl = require('openssl-nodejs')
+const { execSync } = require('child_process');
 const fs = require('fs');
 
 
 module.exports.sign = async (event) => {
-    const manifest = event;
+    const manifest = event.body;
     const wwdr = `-----BEGIN CERTIFICATE-----
 MIIEUTCCAzmgAwIBAgIQfK9pCiW3Of57m0R6wXjF7jANBgkqhkiG9w0BAQsFADBi
 MQswCQYDVQQGEwJVUzETMBEGA1UEChMKQXBwbGUgSW5jLjEmMCQGA1UECxMdQXBw
@@ -75,24 +73,35 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
     const passphrase = process.env.KEY_PASSPHRASE;
     const key = process.env.KEY;
 
-    openssl(["smime", "-binary", "-sign", "-certfile", {
-        name: 'wwdr.pem',
-        buffer: Buffer.from(wwdr)
-    }, "-signer", {
-        name: 'online.crt.pem',
-        buffer: Buffer.from(certificate)
-    }, "-inkey", {
-        name: 'online.key.pem',
-        buffer: Buffer.from(key)
-    }, "-in", {
-        name: 'manifest.json',
-        buffer: Buffer.from(JSON.stringify(manifest))
-    }, "-out", {
-        name: 'signature',
-    }, "-outform", "DER", "-passin", "pass:" + key]);
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(event, null, 2),
-    };
+    // /tmp acts as a cache when the lambda is "hot"
+    if (!fs.existsSync('/tmp/certificate.pem')) {
+        console.log('files do not exist, creating them...')
+        fs.writeFileSync('/tmp/certificate.pem', certificate);
+        fs.writeFileSync('/tmp/wwdr.pem', wwdr);
+        fs.writeFileSync('/tmp/key.pem', key.replace(/\\n/g, "\n"));
+    }
+    // TODO: clear tmp manifest
+    fs.writeFileSync('/tmp/manifest.json', manifest)
+
+    const command = `echo '${manifest}' | openssl smime -binary -sign -md SHA1 -certfile /tmp/wwdr.pem -signer /tmp/certificate.pem -inkey /tmp/key.pem -in /tmp/manifest.json -outform DER -passin pass:${passphrase}`
+    console.log(command)
+    try {
+        const stdout = execSync(command)
+        console.log('rulez')
+        const base64data = stdout.toString('base64');
+        console.log('result', base64data)
+
+        return {
+            statusCode: 200,
+            body: base64data,
+        };
+
+    } catch(error) {
+        console.log(`Status Code: ${error.status} with '${error.message}'`);
+        return {
+            statusCode: 500,
+            body: error.status + error.message,
+        };
+    }
 }
