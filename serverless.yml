@@ -1,0 +1,28 @@
+org:                    clawfire
+app:                    passbook-sign
+service:                passbook-sign
+
+frameworkVersion:       '2'
+
+
+provider:
+  name:                 aws
+  stage:                dev
+  region:               eu-central-1
+  runtime:              nodejs12.x
+  lambdaHashingVersion: 20201221
+  layers:
+      - arn:aws:lambda:eu-central-1:034541671702:layer:openssl-lambda:1
+
+functions:
+  sign:
+    handler:            handler.sign
+    name:               ${sls:stage}-passbook-sign
+    description:        Sign a manifest.json for passbook signature
+    events:
+        - http:
+            path:       sign
+            method:     post
+    environment:
+        KEY :           ${param:key}
+        KEY_PASSPHRASE : ${param:passphrase}
