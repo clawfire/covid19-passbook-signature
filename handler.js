@@ -7,6 +7,41 @@ const fs = require('fs');
 module.exports.sign = async (event) => {
     const manifest = event.body;
 
+    try {
+        const parsedManifest = JSON.parse(manifest);
+
+        // validate manifest
+        if (typeof parsedManifest !== 'object') {
+            return {
+                statusCode: 400,
+                body: 'manifest is malformed',
+            };        
+        }
+        const keys = Object.keys(parsedManifest).sort()
+        const refKeys = [ "icon.png", "icon@2x.png", "pass.json", "thumbnail.png", "thumbnail@2x.png" ]
+
+        if (JSON.stringify(keys) !== JSON.stringify(refKeys)) {
+            return {
+                statusCode: 400,
+                body: 'manifest is malformed',
+            };         
+        }
+        keys.forEach(e => {
+            if ((typeof e !== "string") || e.length !== 0) {
+                return {
+                    statusCode: 400,
+                    body: 'manifest is malformed',
+                };             
+            }
+        });
+    } catch(e) {
+        return {
+            statusCode: 400,
+            body: 'manifest is malformed',
+        };         
+    }
+
+
     const wwdr = `-----BEGIN CERTIFICATE-----
 MIIEUTCCAzmgAwIBAgIQfK9pCiW3Of57m0R6wXjF7jANBgkqhkiG9w0BAQsFADBi
 MQswCQYDVQQGEwJVUzETMBEGA1UEChMKQXBwbGUgSW5jLjEmMCQGA1UECxMdQXBw
