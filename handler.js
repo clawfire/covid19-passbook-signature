@@ -5,6 +5,11 @@ const fs = require('fs');
 
 module.exports.sign = async (event) => {
     const manifest = event.body;
+    const corsDomain = 'https://covid19passbook.netlify.app';
+    const headers = {
+        'Access-Control-Allow-Origin': corsDomain,
+        'Access-Control-Allow-Credentials': true
+    };
 
     try {
         const parsedManifest = JSON.parse(manifest);
@@ -13,6 +18,7 @@ module.exports.sign = async (event) => {
         if (typeof parsedManifest !== 'object') {
             return {
                 statusCode: 400,
+                headers: headers,
                 body: 'manifest is malformed',
             };
         }
@@ -22,6 +28,7 @@ module.exports.sign = async (event) => {
         if (JSON.stringify(keys) !== JSON.stringify(refKeys)) {
             return {
                 statusCode: 400,
+                headers: headers,
                 body: 'manifest is malformed',
             };
         }
@@ -29,6 +36,7 @@ module.exports.sign = async (event) => {
             if ((typeof e !== "string") || e.length !== 0) {
                 return {
                     statusCode: 400,
+                    headers: headers,
                     body: 'manifest is malformed',
                 };
             }
@@ -36,6 +44,7 @@ module.exports.sign = async (event) => {
     } catch (e) {
         return {
             statusCode: 400,
+            headers: headers,
             body: 'manifest is malformed',
         };
     }
@@ -123,10 +132,7 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
 
         return {
             statusCode: 200,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Credentials': true
-            },
+            headers: headers,
             body: base64data,
         };
 
@@ -134,10 +140,7 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
         console.log(`Status Code: ${error.status} with '${error.message}'`);
         return {
             statusCode: 500,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Credentials': true
-            },
+            headers: headers,
             body: error.status + error.message,
         };
     }
