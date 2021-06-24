@@ -1,10 +1,7 @@
 'use strict';
-const {
-    execSync
-} = require('child_process');
+const { execSync } = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
-
 
 module.exports.sign = async (event) => {
     const manifest = event.body;
@@ -43,7 +40,6 @@ module.exports.sign = async (event) => {
         };
     }
 
-
     const wwdr = `-----BEGIN CERTIFICATE-----
 MIIEIjCCAwqgAwIBAgIIAd68xDltoBAwDQYJKoZIhvcNAQEFBQAwYjELMAkGA1UE
 BhMCVVMxEzARBgNVBAoTCkFwcGxlIEluYy4xJjAkBgNVBAsTHUFwcGxlIENlcnRp
@@ -69,12 +65,8 @@ ruGgsbwpgOYJd+W+NKIByn/c4grmO7i77LpilfMFY0GCzQ87HUyVpNur+cmV6U/k
 TecmmYHpvPm0KdIBembhLoz2IYrF+Hjhga6/05Cdqa3zr/04GpZnMBxRpVzscYqC
 tGwPDBUf
 -----END CERTIFICATE-----`;
-    const certificate = `Bag Attributes
-    friendlyName: Pass Type ID: pass.com.thibaultmilan.covid
-    localKeyID: 38 68 AA DF AF 52 6B 6F 91 9F 5D A8 13 21 64 44 A6 94 DA A4
-subject=/UID=pass.com.thibaultmilan.covid/CN=Pass Type ID: pass.com.thibaultmilan.covid/OU=4699QGD4UQ/O=Thibault Milan/C=US
-issuer=/C=US/O=Apple Inc./OU=Apple Worldwide Developer Relations/CN=Apple Worldwide Developer Relations Certification Authority
------BEGIN CERTIFICATE-----
+
+    const certificate = `-----BEGIN CERTIFICATE-----
 MIIF+jCCBOKgAwIBAgIICtoLos2NYvQwDQYJKoZIhvcNAQEFBQAwgZYxCzAJBgNV
 BAYTAlVTMRMwEQYDVQQKDApBcHBsZSBJbmMuMSwwKgYDVQQLDCNBcHBsZSBXb3Js
 ZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9uczFEMEIGA1UEAww7QXBwbGUgV29ybGR3
@@ -111,11 +103,9 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
     const passphrase = process.env.KEY_PASSPHRASE;
     const key = process.env.KEY;
 
-
     // /tmp acts as a cache when the lambda is "hot"
     // It's automatically flushed when the lambda is cold (±30min w/o access)
     if (!fs.existsSync('/tmp/certificate.pem')) {
-        console.log('files do not exist, creating them...')
         fs.writeFileSync('/tmp/certificate.pem', certificate);
         fs.writeFileSync('/tmp/wwdr.pem', wwdr);
         fs.writeFileSync('/tmp/key.pem', key.replace(/\\n/g, "\n"));
@@ -126,14 +116,10 @@ VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
     if (!fs.existsSync(manifestFile)) {
         fs.writeFileSync(manifestFile, manifest)
     }
-    console.log("Manifest is", JSON.stringify(manifest));
     const command = `openssl smime -binary -sign -md SHA1 -certfile /tmp/wwdr.pem -signer /tmp/certificate.pem -inkey /tmp/key.pem -in ${manifestFile} -outform DER -passin pass:${passphrase}`
-    console.log(command)
     try {
         const stdout = execSync(command);
-        console.log('rulez');
         const base64data = stdout.toString('base64');
-        console.log('result', base64data);
 
         return {
             statusCode: 200,
