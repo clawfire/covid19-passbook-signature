@@ -5,7 +5,11 @@ const fs = require('fs');
 
 module.exports.sign = async (event) => {
     const manifest = event.body;
-    const corsDomain = 'https://covid19passbook.netlify.app';
+    const regex = /https:\/\/covid19passbook(?:-(?:\d|.){6}\.netlify\.live|\.netlify\.app)/;
+    let corsDomain = 'https://covid19passbook.netlify.app';
+    if (regex.test(event.headers.origin)) {
+        corsDomain = event.headers.origin;
+    }
     const headers = {
         'Access-Control-Allow-Origin': corsDomain,
         'Access-Control-Allow-Credentials': true
