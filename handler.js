@@ -5,9 +5,10 @@ const fs = require('fs');
 
 module.exports.sign = async (event) => {
     const manifest = event.body;
-    const regex = /https:\/\/covid19passbook(?:-(?:\d|.){6}\.netlify\.live|\.netlify\.app)/;
-    let corsDomain = 'https://covid19passbook.netlify.app';
-    if (regex.test(event.headers.origin)) {
+    const regex = /https:\/\/passbook-doctoranytime(?:-(?:\d|.){6}\.netlify\.live|\.netlify\.app)/;
+    let corsDomain = 'https://passbook-doctoranytime.netlify.app/';
+    let aliasDomains = ['https://covidpass.doctoranytime.gr','https://covidpass.doctoranytime.be'];
+    if (regex.test(event.headers.origin) || aliasDomains.includes(event.headers.origin)) {
         corsDomain = event.headers.origin;
     }
     const headers = {
@@ -27,13 +28,13 @@ module.exports.sign = async (event) => {
             };
         }
         const keys = Object.keys(parsedManifest).sort()
-        const refKeys = ["icon.png", "icon@2x.png", "pass.json", "thumbnail.png", "thumbnail@2x.png"]
+        const refKeys = ["icon.png", "icon@2x.png", "logo.png", "pass.json", "thumbnail.png"]
 
         if (JSON.stringify(keys) !== JSON.stringify(refKeys)) {
             return {
                 statusCode: 400,
                 headers: headers,
-                body: 'manifest is malformed',
+                body: 'manifest missing mandatory keys. Got ' + JSON.stringify(keys) + ' but waiting ' + JSON.stringify(refKeys),
             };
         }
         keys.forEach(e => {
@@ -41,7 +42,7 @@ module.exports.sign = async (event) => {
                 return {
                     statusCode: 400,
                     headers: headers,
-                    body: 'manifest is malformed',
+                    body: 'manifest keys missing values',
                 };
             }
         });
@@ -80,38 +81,38 @@ tGwPDBUf
 -----END CERTIFICATE-----`;
 
     const certificate = `-----BEGIN CERTIFICATE-----
-MIIF+jCCBOKgAwIBAgIICtoLos2NYvQwDQYJKoZIhvcNAQEFBQAwgZYxCzAJBgNV
+MIIF/DCCBOSgAwIBAgIIbEY5XfuoJGMwDQYJKoZIhvcNAQEFBQAwgZYxCzAJBgNV
 BAYTAlVTMRMwEQYDVQQKDApBcHBsZSBJbmMuMSwwKgYDVQQLDCNBcHBsZSBXb3Js
 ZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9uczFEMEIGA1UEAww7QXBwbGUgV29ybGR3
 aWRlIERldmVsb3BlciBSZWxhdGlvbnMgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkw
-HhcNMjEwNjEwMjE0NjEwWhcNMjIwNjEwMjE0NjA5WjCBnjEsMCoGCgmSJomT8ixk
-AQEMHHBhc3MuY29tLnRoaWJhdWx0bWlsYW4uY292aWQxMzAxBgNVBAMMKlBhc3Mg
-VHlwZSBJRDogcGFzcy5jb20udGhpYmF1bHRtaWxhbi5jb3ZpZDETMBEGA1UECwwK
-NDY5OVFHRDRVUTEXMBUGA1UECgwOVGhpYmF1bHQgTWlsYW4xCzAJBgNVBAYTAlVT
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwWSMfAYjakGgecDQ3nOz
-bu+bKk8dhBoIxY9wxp+MgBv/t7Fsz/AxViupOpfZIdwSDzoG9y3EEd7aKPZWYmvo
-B1Iw6dNw+euzJ1zTVuC5iujbQMFYgDhm4RYlB17Pr8LzubLEvSkqhm+Wr2hGqcNI
-pmL8JW7FAHDUxO2Zvs5utI153zrwBN+gg8eX3ZQ3Dy1xuL3QMNQyZQPPsB/BVFBL
-6lQjXYailGs6kKnYRL+pBUssbNSiG9PqJJTjJiuzyFkGfuGMQMmxjwILcjYXyMdG
-BAAgnE/qFJt3SuBrtc8ZcrbgQ6xF90DXxoAVNd8YvB4aRm7EMH1XnlJXO+DLGVyJ
-+wIDAQABo4ICQDCCAjwwCQYDVR0TBAIwADAfBgNVHSMEGDAWgBSIJxcJqbYYYIvs
-67r2R1nFUlSjtzA9BggrBgEFBQcBAQQxMC8wLQYIKwYBBQUHMAGGIWh0dHA6Ly9v
-Y3NwLmFwcGxlLmNvbS9vY3NwLXd3ZHIwMzCCAQ8GA1UdIASCAQYwggECMIH/Bgkq
-hkiG92NkBQEwgfEwKQYIKwYBBQUHAgEWHWh0dHA6Ly93d3cuYXBwbGUuY29tL2Fw
-cGxlY2EvMIHDBggrBgEFBQcCAjCBtgyBs1JlbGlhbmNlIG9uIHRoaXMgY2VydGlm
-aWNhdGUgYnkgYW55IHBhcnR5IGFzc3VtZXMgYWNjZXB0YW5jZSBvZiB0aGUgdGhl
-biBhcHBsaWNhYmxlIHN0YW5kYXJkIHRlcm1zIGFuZCBjb25kaXRpb25zIG9mIHVz
-ZSwgY2VydGlmaWNhdGUgcG9saWN5IGFuZCBjZXJ0aWZpY2F0aW9uIHByYWN0aWNl
-IHN0YXRlbWVudHMuMB4GA1UdJQQXMBUGCCsGAQUFBwMCBgkqhkiG92NkBA4wMAYD
-VR0fBCkwJzAloCOgIYYfaHR0cDovL2NybC5hcHBsZS5jb20vd3dkcmNhLmNybDAd
-BgNVHQ4EFgQUOGiq369Sa2+Rn12oEyFkRKaU2qQwCwYDVR0PBAQDAgeAMBAGCiqG
-SIb3Y2QGAwIEAgUAMCwGCiqGSIb3Y2QGARAEHgwccGFzcy5jb20udGhpYmF1bHRt
-aWxhbi5jb3ZpZDANBgkqhkiG9w0BAQUFAAOCAQEAK8UvbQmCwftHBGiu6YeLBgSD
-iVR7arhhn7d/rWDU52pduAj4h9F89YI+QDu6ZV5FbVq2/uGRHlj5nmqEolJU2cv4
-Shtg+9gXD79kqodN5h8chQ8qcTBNsf7zU92DJq5xkNhAdAFc4aCigWOi8ujK/466
-zicUZmq4DfSffSkiE14wLWJxfp7fikedp5GBowwwkQIQyX8C5fZg9doFqIM0m7Cw
-/euE2QV+EcE5nfOtGApEmA67POSEw4TuVg7O7l0ZQqQVMbhqNrcwKQ9RBHlmwYwo
-VZeQa5t+2IRuXZlavaWohlGhcAjiXTVdKDe76IZ5TALyWOGrUZy5hJjUL5EiKg==
+HhcNMjEwODE5MTQzNDM4WhcNMjIwODE5MTQzNDM3WjCBojEqMCgGCgmSJomT8ixk
+AQEMGnBhc3MuY29tLmRvY3RvcmFueXRpbWUuYXBwMTEwLwYDVQQDDChQYXNzIFR5
+cGUgSUQ6IHBhc3MuY29tLmRvY3RvcmFueXRpbWUuYXBwMRMwEQYDVQQLDAo4RlI0
+OFBaMkhCMR8wHQYDVQQKDBZEb2N0b3IgQW55dGltZSBCZWxnaXVtMQswCQYDVQQG
+EwJVUzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPaEFC58qFNYUCWw
+oezARAixvjyx0LDRHK9K6aL9+Zy5m97FaUND5BuicSjfJ9x3Twlo0447h0Yrhm5w
+qat4iRBvz/m3kd4/KJxxBgx46dr6NoDYju8WqZr5lruHyPaUEOIV8dn1VEv/y7xw
+CSt4BNrbARsaI/K2mF01AFtE2h2LqdjrXkAAsXjbgI+BsSpZxYyVjgKrJRX/61a/
+JgE7BC8t6XSmZki3pGPeffAMCE+syii7EfdKXZMrN+D/FUI/thGF3L3/9X1INkm1
+3EHuqyYAsDWlKFmmerAuHbwMgveTQ3fEosIr8vnSoqJ1yIHpWOG5a6LdRxBQhxRo
+NxSfgIUCAwEAAaOCAj4wggI6MAkGA1UdEwQCMAAwHwYDVR0jBBgwFoAUiCcXCam2
+GGCL7Ou69kdZxVJUo7cwPQYIKwYBBQUHAQEEMTAvMC0GCCsGAQUFBzABhiFodHRw
+Oi8vb2NzcC5hcHBsZS5jb20vb2NzcC13d2RyMDMwggEPBgNVHSAEggEGMIIBAjCB
+/wYJKoZIhvdjZAUBMIHxMCkGCCsGAQUFBwIBFh1odHRwOi8vd3d3LmFwcGxlLmNv
+bS9hcHBsZWNhLzCBwwYIKwYBBQUHAgIwgbYMgbNSZWxpYW5jZSBvbiB0aGlzIGNl
+cnRpZmljYXRlIGJ5IGFueSBwYXJ0eSBhc3N1bWVzIGFjY2VwdGFuY2Ugb2YgdGhl
+IHRoZW4gYXBwbGljYWJsZSBzdGFuZGFyZCB0ZXJtcyBhbmQgY29uZGl0aW9ucyBv
+ZiB1c2UsIGNlcnRpZmljYXRlIHBvbGljeSBhbmQgY2VydGlmaWNhdGlvbiBwcmFj
+dGljZSBzdGF0ZW1lbnRzLjAeBgNVHSUEFzAVBggrBgEFBQcDAgYJKoZIhvdjZAQO
+MDAGA1UdHwQpMCcwJaAjoCGGH2h0dHA6Ly9jcmwuYXBwbGUuY29tL3d3ZHJjYS5j
+cmwwHQYDVR0OBBYEFCpIPvC4LuHfTKXk3CG+xNrjezmnMAsGA1UdDwQEAwIHgDAQ
+BgoqhkiG92NkBgMCBAIFADAqBgoqhkiG92NkBgEQBBwMGnBhc3MuY29tLmRvY3Rv
+cmFueXRpbWUuYXBwMA0GCSqGSIb3DQEBBQUAA4IBAQCoWO0eyMFhvmxUWgFSPsR3
+CF0CO+h+qZim/AvwaXbt8karBt/AMIa750hoLCdKXbvAS1J5jfxj3rXw0h0IOCa2
+VZ9KtjEK6thZ7kfOtOEs0frNvzuC0AeNQX9gF3dOKwhiu8KYwV/qoEj3yqLYiqst
+VV5WWpcJokYLbThRqh3oS/ok4oOABJ47IteHIbjOdyUdyH+OdO4LjxqxPRT/Rb+Z
+KX82sAAsUMdbH11yMAM8wWij3illQnU48XiZPd3oN6KXdzcXCpk4kjA4NObXY0+d
+iGlibqMmvruDXVaAbKu/4Pm+suK5VJaZ43OrQk2XYb6wFyKazapuds98R5VGAda2
 -----END CERTIFICATE-----`;
     const passphrase = process.env.KEY_PASSPHRASE;
     const key = process.env.KEY;
