@@ -1,5 +1,5 @@
 org:                    clawfire # change this with your own org
-app:                    passbook-sign
+app:                    covid19passbook-doctoranytime
 service:                passbook-sign
 
 frameworkVersion:       '2'
@@ -7,7 +7,7 @@ frameworkVersion:       '2'
 
 provider:
   name:                 aws
-  stage:                dev
+  stage:                production
   region:               eu-central-1
   runtime:              nodejs12.x
   lambdaHashingVersion: 20201221
@@ -25,6 +25,6 @@ functions:
             method:     post
     environment:
         # put your key in this secret below. It should be a one liner with \n for new lines.
-        KEY :           ${param:key}
+        KEY :           ${param:KEY}
         # and your key passphrase here
-        KEY_PASSPHRASE : ${param:passphrase}
+        KEY_PASSPHRASE : ${param:KEY_PASSPHRASE}
